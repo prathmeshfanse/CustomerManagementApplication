@@ -34,31 +34,31 @@ public class CustomerServiceImpl implements CustomerService {
                 customerDto.getAnnualSpend(), customerDto.getLastPurchedDate());
     }
 
-    private CustomerDto getPurchasedDate(Customer customer) {
+    private String getTier(Customer customer) {
         CustomerDto customerDto = convertToDto(customer);
         Date purchesDate = customer.getLastPurchedDate();
         LocalDate purchasedDate = LocalDate.of(purchesDate.getYear(), purchesDate.getMonth(), purchesDate.getDay());
         Double spend = customer.getAnnualSpend();
 
         if (spend >= 10000 && !purchasedDate.isBefore(LocalDate.now().minusMonths(6))) {
-            customerDto.setTier("Platinum");
+            return "Platinum";
         } else if (spend >= 1000 && !purchasedDate.isBefore(LocalDate.now().minusMonths(12))) {
-            customerDto.setTier("Gold");
-        } else {
-            customerDto.setTier("Silver");
+            return "Gold";
         }
-        return customerDto;
+        
+        return "Silver";
+
     }
 
     @Override
-    public CustomerDto createCustomer(CustomerDto customerDto) {
-        Customer customer = convertToEntity(customerDto);
+    public CustomerDto createCustomer(CustomerDto customerDto) throws Exception{
 
         if (customerDto == null) {
             throw new IllegalArgumentException("Missing Required fields");
-        } else if (customerDto.getName() == null || customerDto.getName().equals("")) {
+        }else if (customerDto.getName() == null || customerDto.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Missing required field: name");
-        } else if (customerDto.getEmail() == null || customerDto.getEmail().equals("")) {
+        }else if (customerDto.getEmail() == null || customerDto.getEmail().trim().isEmpty()) {
+            System.out.println("VALIDATION HIT");
             throw new IllegalArgumentException("Missing required field: email");
         }
 
@@ -67,7 +67,7 @@ public class CustomerServiceImpl implements CustomerService {
         }else if(repository.existsByEmail(customerDto.getEmail())){
             throw new CustomerWithEmailAlreadyExists("Email Already Exists");
         }
-
+        Customer customer = convertToEntity(customerDto);
         return convertToDto(repository.save(customer));
     }
 
@@ -103,17 +103,26 @@ public class CustomerServiceImpl implements CustomerService {
         Customer customer = repository.findById(id)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not Found with id : " + id));
 
-        return getPurchasedDate(customer);
+        CustomerDto dto = convertToDto(customer);
+        dto.setTier(getTier(customer));
+        return dto;
     }
 
     public CustomerDto getCustomerByName(String name) {
         Customer customer = repository.getCustomerByName(name);
-        return getPurchasedDate(customer);
+
+        
+        CustomerDto dto = convertToDto(customer);
+        dto.setTier(getTier(customer));
+        return dto;
     }
 
     public CustomerDto getCustomerByEmail(String email) {
         Customer customer = repository.getCustomerByEmail(email);
-        return getPurchasedDate(customer);
+        
+        CustomerDto dto = convertToDto(customer);
+        dto.setTier(getTier(customer));
+        return dto;
     }
 
     @Override
