@@ -98,7 +98,7 @@ public class CustomerServiceImplTest {
 
     }
 
-    @Test
+     @Test
     public void testMissingEmail() throws Exception{
         customer1.setEmail(null);
 
